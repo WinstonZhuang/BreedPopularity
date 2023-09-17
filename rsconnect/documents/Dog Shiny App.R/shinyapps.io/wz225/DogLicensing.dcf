@@ -1,0 +1,13 @@
+name: DogLicensing
+title: DogLicensing
+username:
+account: wz225
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9151258
+bundleId: 7242390
+url: https://wz225.shinyapps.io/DogLicensing/
+when: 1684606432.38443
+lastSyncTime: 1684606432.38444
+asMultiple: FALSE
+asStatic: FALSE

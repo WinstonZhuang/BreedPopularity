@@ -1,0 +1,52 @@
+library(leaflet)
+library(leaflet.extras)
+library(sf)
+library(ggmap)
+library(dplyr)
+library(shiny)
+install.packages('rsconnect')
+register_google(key = "AIzaSyAHpitChR5Mzw1DOKrnzm007XKBcQImHYs")
+ui <- fluidPage(
+  titlePanel("NYC Heatmap"),
+  selectInput("type", "Select a Variable:",
+              choices = c("BornOutsideUS", "CollegeOrHigherEdu", "Poverty", "Unemployment")),
+  leafletOutput("map")
+)
+server <- function(input, output, session) {
+  
+  data <- reactive({
+    data <- read.csv("communitiesdata.csv")
+    datamini <- head(data, 7)
+    com <- data.frame(datamini$X.2, datamini$X.17, datamini$X.32, datamini$X.36, datamini$X.37)
+    names(com)[1] <- "Names"
+    names(com)[2] <- "BornOutsideUS"
+    names(com)[3] <- "CollegeOrHigherEdu"
+    names(com)[4] <- "Poverty"
+    names(com)[5] <- "Unemployment"
+    com <- subset(com, com[,1] != "Name")
+    com <- subset(com, com[,1] != "NYC")
+    nyc_shapefile <- st_read("shapefile")
+    nyc_shapefile <- st_transform(nyc_shapefile, "+proj=longlat +datum=WGS84")
+    latlon <- geocode(com$Names, source = "google", output = "latlon")
+    com <- cbind(com, latlon)
+    com[, input$type] <- as.numeric(com[, input$type])
+    nyc_shapefile <- left_join(nyc_shapefile, com, by = c("boro_name" = "Names"))
+  })
+  
+  output$map <- renderLeaflet({
+    palette <- colorNumeric(palette = "YlOrRd", domain = as.numeric(data()[[input$type]]))
+    leaflet(data = nyc_shapefile) %>%
+      addTiles() %>%
+      addPolygons(fillColor = ~palette(as.numeric(get(input$type))), 
+                  fillOpacity = 0.7, 
+                  color = "black",
+                  weight = 1) %>%
+      addLegend(position = "bottomright", 
+                pal = palette, 
+                values = as.numeric(data()[[input$type]]), 
+                title = input$type,
+                labFormat = labelFormat(suffix = "%"))
+  })
+}
+
+shinyApp(ui, server)

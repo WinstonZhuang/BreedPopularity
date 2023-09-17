@@ -1,0 +1,302 @@
+library(ggmap)
+library(ggrepel)
+library(dplyr)
+library(ggplot2)
+library(shiny)
+library(klaR)
+library(rsconnect)
+register_google(key = "AIzaSyAHpitChR5Mzw1DOKrnzm007XKBcQImHYs")
+citation("ggmap")
+data <- read.csv("NYC_Dog_Licensing_Dataset.csv")
+data2014 <- read.csv("data2014.csv")
+data2015 <- read.csv("data2015.csv")
+data2016 <- read.csv("data2016.csv")
+data2017 <- read.csv("data2017.csv")
+data2018 <- read.csv("data2018.csv")
+data2019 <- read.csv("data2019.csv")
+data2020 <- read.csv("data2020.csv")
+data2021 <- read.csv("data2021.csv")
+sample2014 <- read.csv("sample2014.csv")
+sample2015 <- read.csv("sample2015.csv")
+sample2016 <- read.csv("sample2016.csv")
+sample2017 <- read.csv("sample2017.csv")
+sample2018 <- read.csv("sample2018.csv")
+sample2019 <- read.csv("sample2019.csv")
+sample2020 <- read.csv("sample2020.csv")
+sample2021 <- read.csv("sample2021.csv")
+table2014 <- read.csv("table2014.csv")
+table2015 <- read.csv("table2015.csv")
+table2016 <- read.csv("table2016.csv")
+table2017 <- read.csv("table2017.csv")
+table2018 <- read.csv("table2018.csv")
+table2019 <- read.csv("table2019.csv")
+table2020 <- read.csv("table2020.csv")
+table2021 <- read.csv("table2021.csv")
+
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput("year", "Select a year:", min = 2014, max = 2021, value = 2014, step = 1),
+    ),
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Map of NYC",
+                 plotOutput("newyorkcity")
+        ),
+        tabPanel("Issued Dog Licenses by Borough",
+                 selectInput("type", "Select a Data Type:",
+                             choices = c("Raw", "Proportional")),
+                 plotOutput("borough")
+        ),
+        tabPanel("Most Popular Issued Dogs",
+                 selectInput("borough_select", "Select a Borough:",
+                             choice = c("All", "Bronx",
+                                        "Brooklyn",
+                                        "Manhattan",
+                                        "Staten Island",
+                                        "Queens")),
+                 selectInput("data_type", "Select a Data Type:",
+                             choices = c("Raw", "Proportional")),
+                 plotOutput("popular")
+        ),
+        tabPanel("Chi-Squared Test",
+                 selectInput("breeds", "Select a Dog Breed:",
+                             choices = NULL),
+                 actionButton("chi", "Start Chi-Squared"),
+                 verbatimTextOutput("chiResult")
+        )
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  
+  newyorkcity <- reactive({
+    if (input$year == "2014") {
+      return (sample2014)
+    } else if (input$year == "2015") {
+      return (sample2015)
+    } else if (input$year == "2016") {
+      return (sample2016)
+    } else if (input$year == "2017") {
+      return (sample2017)
+    } else if (input$year == "2018") {
+      return (sample2018)
+    } else if (input$year == "2019") {
+      return (sample2019)
+    } else if (input$year == "2020") {
+      return (sample2020)
+    } else if (input$year == "2021") {
+      return (sample2021)
+    }
+  })
+  
+  borough <- reactive({
+    if (input$year == "2014") {
+      return (data2014)
+    } else if (input$year == "2015") {
+      return (data2015)
+    } else if (input$year == "2016") {
+      return (data2016)
+    } else if (input$year == "2017") {
+      return (data2017)
+    } else if (input$year == "2018") {
+      return (data2018)
+    } else if (input$year == "2019") {
+      return (data2019)
+    } else if (input$year == "2020") {
+      return (data2020)
+    } else if (input$year == "2021") {
+      return (data2021)
+    }
+  })
+  
+  popular <- reactive({
+    if (input$borough_select == "All") {
+      if (input$year == "2014") {
+        return (table2014)
+      } else if (input$year == "2015") {
+        return (table2015)
+      } else if (input$year == "2016") {
+        return (table2016)
+      } else if (input$year == "2017") {
+        return (table2017)
+      } else if (input$year == "2018") {
+        return (table2018)
+      } else if (input$year == "2019") {
+        return (table2019)
+      } else if (input$year == "2020") {
+        return (table2020)
+      } else if (input$year == "2021") {
+        return (table2021)
+      }
+    } else if (input$borough_select == "Bronx") {
+      if (input$year == "2014") {
+        return (table2014 %>% filter(Borough == "Bronx"))
+      } else if (input$year == "2015") {
+        return (table2015 %>% filter(Borough == "Bronx"))
+      } else if (input$year == "2016") {
+        return (table2016 %>% filter(Borough == "Bronx"))
+      } else if (input$year == "2017") {
+        return (table2017 %>% filter(Borough == "Bronx"))
+      } else if (input$year == "2018") {
+        return (table2018 %>% filter(Borough == "Bronx"))
+      } else if (input$year == "2019") {
+        return (table2019 %>% filter(Borough == "Bronx"))
+      } else if (input$year == "2020") {
+        return (table2020 %>% filter(Borough == "Bronx"))
+      } else if (input$year == "2021") {
+        return (table2021 %>% filter(Borough == "Bronx"))
+      }
+    } else if (input$borough_select == "Brooklyn") {
+      if (input$year == "2014") {
+        return (table2014 %>% filter(Borough == "Brooklyn"))
+      } else if (input$year == "2015") {
+        return (table2015 %>% filter(Borough == "Brooklyn"))
+      } else if (input$year == "2016") {
+        return (table2016 %>% filter(Borough == "Brooklyn"))
+      } else if (input$year == "2017") {
+        return (table2017 %>% filter(Borough == "Brooklyn"))
+      } else if (input$year == "2018") {
+        return (table2018 %>% filter(Borough == "Brooklyn"))
+      } else if (input$year == "2019") {
+        return (table2019 %>% filter(Borough == "Brooklyn"))
+      } else if (input$year == "2020") {
+        return (table2020 %>% filter(Borough == "Brooklyn"))
+      } else if (input$year == "2021") {
+        return (table2021 %>% filter(Borough == "Brooklyn"))
+      } 
+    } else if (input$borough_select == "Manhattan") {
+      if (input$year == "2014") {
+        return (table2014 %>% filter(Borough == "Manhattan"))
+      } else if (input$year == "2015") {
+        return (table2015 %>% filter(Borough == "Manhattan"))
+      } else if (input$year == "2016") {
+        return (table2016 %>% filter(Borough == "Manhattan"))
+      } else if (input$year == "2017") {
+        return (table2017 %>% filter(Borough == "Manhattan"))
+      } else if (input$year == "2018") {
+        return (table2018 %>% filter(Borough == "Manhattan"))
+      } else if (input$year == "2019") {
+        return (table2019 %>% filter(Borough == "Manhattan"))
+      } else if (input$year == "2020") {
+        return (table2020 %>% filter(Borough == "Manhattan"))
+      } else if (input$year == "2021") {
+        return (table2021 %>% filter(Borough == "Manhattan"))
+      }
+    } else if (input$borough_select == "Staten Island") {
+      if (input$year == "2014") {
+        return (table2014 %>% filter(Borough == "Staten Island"))
+      } else if (input$year == "2015") {
+        return (table2015 %>% filter(Borough == "Staten Island"))
+      } else if (input$year == "2016") {
+        return (table2016 %>% filter(Borough == "Staten Island"))
+      } else if (input$year == "2017") {
+        return (table2017 %>% filter(Borough == "Staten Island"))
+      } else if (input$year == "2018") {
+        return (table2018 %>% filter(Borough == "Staten Island"))
+      } else if (input$year == "2019") {
+        return (table2019 %>% filter(Borough == "Staten Island"))
+      } else if (input$year == "2020") {
+        return (table2020 %>% filter(Borough == "Staten Island"))
+      } else if (input$year == "2021") {
+        return (table2021 %>% filter(Borough == "Staten Island"))
+      } 
+    } else {
+      if (input$year == "2014") {
+        return (table2014 %>% filter(Borough == "Queens"))
+      } else if (input$year == "2015") {
+        return (table2015 %>% filter(Borough == "Queens"))
+      } else if (input$year == "2016") {
+        return (table2016 %>% filter(Borough == "Queens"))
+      } else if (input$year == "2017") {
+        return (table2017 %>% filter(Borough == "Queens"))
+      } else if (input$year == "2018") {
+        return (table2018 %>% filter(Borough == "Queens"))
+      } else if (input$year == "2019") {
+        return (table2019 %>% filter(Borough == "Queens"))
+      } else if (input$year == "2020") {
+        return (table2020 %>% filter(Borough == "Queens"))
+      } else if (input$year == "2021") {
+        return (table2021 %>% filter(Borough == "Queens"))
+      }
+    } 
+  })
+  
+  chiDat <- reactive({
+    if (input$year == "2014") {
+      return (data2014)
+    } else if (input$year == "2015") {
+      return (data2015)
+    } else if (input$year == "2016") {
+      return (data2016)
+    } else if (input$year == "2017") {
+      return (data2017)
+    } else if (input$year == "2018") {
+      return (data2018)
+    } else if (input$year == "2019") {
+      return (data2019)
+    } else if (input$year == "2020") {
+      return (data2020)
+    } else if (input$year == "2021") {
+      return (data2021)
+    }
+  })
+  
+  observe({
+    breeds <- unique(chiDat()$BreedName)
+    updateSelectInput(session, "breeds", choices = breeds)
+  })
+  
+  output$newyorkcity <- renderPlot({
+    ggmap(nyc) +
+      geom_point(data = newyorkcity(), aes(x = lon, y = lat, color = Borough),
+                 alpha = 0.5)
+  })
+  
+  output$borough <- renderPlot({
+    if (input$type == "Raw") {
+      ggplot(borough(), aes(x = Borough)) +
+        geom_bar()
+    } else {
+      countBorough <- table(borough()$Borough)
+      boroughProp <- prop.table(countBorough)
+      df <- data.frame(Borough = names(boroughProp), Proportion = boroughProp)
+      ggplot(df, aes(x = Borough, y = Proportion.Freq)) +
+        geom_bar(stat = "identity") +
+        ylab("Proportion")
+    }
+    
+  })
+  
+  output$popular <- renderPlot({
+    if (input$data_type == "Raw") {
+      ggplot(popular(), aes(x = BreedName, y = n)) +
+        geom_bar(stat="identity") +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+        ylab("Frequency")
+    } else {
+      ggplot(popular(), aes(x = BreedName, y = n/sum(n))) +
+        geom_bar(stat="identity") +
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+        ylab("Proportion")
+    }
+    
+  })
+  
+  observeEvent(input$chi, {
+    tableau <- table(chiDat()$BreedName == input$breeds, chiDat()$Borough)
+    result <- chisq.test(tableau)
+    output$chiResult <- renderText({
+      paste0("Chi-Squared Test Result:\n\n",
+             "Observed values:\n", format(tableau, scientific = FALSE), "\n\n",
+             "Expected values:\n", format(result$expected, scientific = FALSE), "\n\n",
+             "Test statistic: ", round(result$statistic, 2), "\n",
+             "Degrees of freedom: ", result$parameter, "\n",
+             "p-value: ", format(result$p.value, scientific = TRUE, digits = 3), "\n\n")
+    })
+  })
+}
+shinyApp(ui, server)
+
